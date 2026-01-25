@@ -66,7 +66,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Predict button
 if st.button("🔮 Predict Sediment Transport", use_container_width=True):
 
-    st.markdown("### 📊 Predicted Dimensionless Transport Rate (Φ)")
+    st.markdown("### 📊 Predicted Dimensionless Bedload Transport Rate (Φ)")
 
     colA, colB = st.columns(2)
 
