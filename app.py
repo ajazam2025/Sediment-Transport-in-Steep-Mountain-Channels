@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import plotly.express as px
 
 from embedded_data import load_data
 from sklearn.neighbors import KNeighborsRegressor
@@ -10,16 +11,16 @@ from sklearn.linear_model import BayesianRidge
 
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Sediment Transport Predictor",
-    page_icon="⛰️",
+    page_title="Sediment Transport GUI",
+    page_icon="🌊",
     layout="centered"
 )
 
 # --------------------------------------------------
 st.markdown("""
-<h2 style="text-align:center;">⛰️ GUI Tool for Sediment Transport Prediction In Steep Mountain Channels </h2>
+<h2 style="text-align:center;">🏔️ GUI Tool for Sediment Transport Prediction</h2>
 <p style="text-align:center;color:gray;">
-
+Steep Mountain Channels | Experimental–Machine Learning Framework
 </p>
 <hr>
 """, unsafe_allow_html=True)
@@ -63,28 +64,77 @@ X_new = np.array([[So, Q, U, H, Re, theta, lambda_D]])
 st.markdown("<br>", unsafe_allow_html=True)
 
 # --------------------------------------------------
-# Predict button
+# Prediction button
 if st.button("🔮 Predict Sediment Transport", use_container_width=True):
 
-    st.markdown("### 📊 Predicted Dimensionless Bedload Transport Rate (Φ)")
+    st.subheader("📊 Predicted Dimensionless Transport Rate (Φ)")
 
     colA, colB = st.columns(2)
 
-    with colA:
-        phi_bma = models["BMA"].predict(X_new)[0]
-        phi_gbr = models["GBR"].predict(X_new)[0]
+    phi_bma = models["BMA"].predict(X_new)[0]
+    phi_gbr = models["GBR"].predict(X_new)[0]
+    phi_knn = models["KNN"].predict(X_new)[0]
+    phi_gpr, std = models["GPR"].predict(X_new, return_std=True)
 
-        st.success(f"🔵 **BMA**: {phi_bma:.2e}")
-        st.success(f"🟢 **GBR**: {phi_gbr:.2e}")
+    with colA:
+        st.success(f"🔵 **BMA** : {phi_bma:.2e}")
+        st.success(f"🟢 **GBR** : {phi_gbr:.2e}")
 
     with colB:
-        phi_knn = models["KNN"].predict(X_new)[0]
-        phi_gpr, std = models["GPR"].predict(X_new, return_std=True)
-
-        st.success(f"🟠 **KNN**: {phi_knn:.2e}")
-        st.success(f"🟣 **GPR**: {phi_gpr[0]:.2e}")
-
+        st.success(f"🟠 **KNN** : {phi_knn:.2e}")
+        st.success(f"🟣 **GPR** : {phi_gpr[0]:.2e}")
         st.caption(f"📈 GPR uncertainty (±1σ): {std[0]:.2e}")
+
+    # --------------------------------------------------
+    st.markdown("<hr>", unsafe_allow_html=True)
+    st.subheader("🎨 Interactive Scatter Plot")
+
+    colx, coly, colc = st.columns(3)
+
+    with colx:
+        x_var = st.selectbox(
+            "X-axis",
+            ["So", "Q", "U", "H", "Re", "theta", "lambda_D"]
+        )
+
+    with coly:
+        y_var = st.selectbox(
+            "Y-axis",
+            ["Phi", "qb", "tau_b"]
+        )
+
+    with colc:
+        color_var = st.selectbox(
+            "Color by",
+            ["So", "Q", "lambda_D", "theta"]
+        )
+
+    fig = px.scatter(
+        df,
+        x=x_var,
+        y=y_var,
+        color=color_var,
+        size=y_var,
+        opacity=0.75,
+        color_continuous_scale="Viridis",
+        title=f"{y_var} vs {x_var}"
+    )
+
+    # Highlight current prediction
+    fig.add_scatter(
+        x=[locals()[x_var]],
+        y=[phi_bma if y_var == "Phi" else df[y_var].mean()],
+        mode="markers",
+        marker=dict(size=18, color="red", symbol="star"),
+        name="Current Prediction"
+    )
+
+    fig.update_layout(
+        template="simple_white",
+        height=500
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 # --------------------------------------------------
 st.markdown("<hr>", unsafe_allow_html=True)
@@ -99,4 +149,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
