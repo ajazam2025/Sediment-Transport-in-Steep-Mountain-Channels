@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 
 from embedded_data import load_data
 from sklearn.neighbors import KNeighborsRegressor
@@ -11,22 +10,22 @@ from sklearn.linear_model import BayesianRidge
 
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Sediment Transport Dashboard",
+    page_title="Sediment Transport Predictor",
     page_icon="🌊",
-    layout="wide"
+    layout="centered"
 )
 
 # --------------------------------------------------
 st.markdown("""
-<h1 style='text-align:center;'>🌊 Sediment Transport Prediction Dashboard</h1>
-<h4 style='text-align:center;color:gray;'>
-Steep Mountain Channels | Experimental + Machine Learning
-</h4>
+<h2 style="text-align:center;">🌊 Sediment Transport Prediction Tool</h2>
+<p style="text-align:center;color:gray;">
+Steep Mountain Channels | Experimental–ML Framework
+</p>
+<hr>
 """, unsafe_allow_html=True)
 
-st.markdown("---")
-
 # --------------------------------------------------
+# Load embedded confidential data
 df = load_data()
 
 X = df[["So","Q","U","H","Re","theta","lambda_D"]]
@@ -44,87 +43,52 @@ def train_models():
 models = train_models()
 
 # --------------------------------------------------
-st.sidebar.header("⚙️ Hydraulic Inputs")
+st.subheader("⚙️ Input Hydraulic Parameters")
 
-So = st.sidebar.slider("📐 Bed slope (So)", 0.001, 0.05, 0.03)
-Q = st.sidebar.slider("💧 Discharge Q (m³/s)", 0.1, 0.3, 0.15)
-U = st.sidebar.slider("➡️ Velocity U (m/s)", 0.5, 3.0, 1.4)
-H = st.sidebar.slider("📏 Flow depth H (m)", 0.2, 0.3, 0.23)
-Re = st.sidebar.number_input("🔁 Reynolds number", value=3.2e5)
-theta = st.sidebar.slider("⚖️ Shields parameter θ", 1e-5, 0.005, 0.001)
-lambda_D = st.sidebar.slider("🪨 Relative spacing λ/D", 1.0, 2.5, 2.0)
+col1, col2 = st.columns(2)
 
-X_new = np.array([[So,Q,U,H,Re,theta,lambda_D]])
+with col1:
+    So = st.number_input("📐 Bed slope (So)", value=0.03, format="%.4f")
+    Q = st.number_input("💧 Discharge Q (m³/s)", value=0.15, format="%.3f")
+    U = st.number_input("➡️ Mean velocity U (m/s)", value=1.40, format="%.2f")
+    H = st.number_input("📏 Flow depth H (m)", value=0.23, format="%.2f")
 
-# --------------------------------------------------
-st.subheader("📊 Model Predictions")
+with col2:
+    Re = st.number_input("🔁 Reynolds number", value=3.2e5, format="%.1e")
+    theta = st.number_input("⚖️ Shields parameter (θ)", value=0.001, format="%.5f")
+    lambda_D = st.number_input("🪨 Relative boulder spacing (λ/D)", value=2.0, format="%.2f")
 
-cols = st.columns(4)
-preds = {}
+X_new = np.array([[So, Q, U, H, Re, theta, lambda_D]])
 
-for name, model in models.items():
-    if name == "GPR":
-        val, std = model.predict(X_new, return_std=True)
-        preds[name] = (val[0], std[0])
-    else:
-        preds[name] = (model.predict(X_new)[0], None)
-
-cols[0].metric("🔵 BMA Φ", f"{preds['BMA'][0]:.2e}")
-cols[1].metric("🟢 GBR Φ", f"{preds['GBR'][0]:.2e}")
-cols[2].metric("🟣 GPR Φ", f"{preds['GPR'][0]:.2e}")
-cols[3].metric("🟠 KNN Φ", f"{preds['KNN'][0]:.2e}")
-
-if preds["GPR"][1] is not None:
-    st.info(f"📈 GPR Uncertainty (±1σ): {preds['GPR'][1]:.2e}")
-
-st.markdown("---")
+st.markdown("<br>", unsafe_allow_html=True)
 
 # --------------------------------------------------
-st.subheader("📈 Model Comparison")
+# Predict button
+if st.button("🔮 Predict Sediment Transport", use_container_width=True):
 
-fig = go.Figure(
-    go.Bar(
-        x=list(preds.keys()),
-        y=[preds[m][0] for m in preds],
-        text=[f"{preds[m][0]:.2e}" for m in preds],
-        textposition="outside"
-    )
-)
+    st.markdown("### 📊 Predicted Dimensionless Transport Rate (Φ)")
 
-fig.update_layout(
-    template="simple_white",
-    xaxis_title="Machine Learning Models",
-    yaxis_title="Predicted Φ"
-)
+    colA, colB = st.columns(2)
 
-st.plotly_chart(fig, use_container_width=True)
+    with colA:
+        phi_bma = models["BMA"].predict(X_new)[0]
+        phi_gbr = models["GBR"].predict(X_new)[0]
 
-# --------------------------------------------------
-st.subheader("⏱️ Time Evolution of Sediment Transport")
+        st.success(f"🔵 **BMA**: {phi_bma:.2e}")
+        st.success(f"🟢 **GBR**: {phi_gbr:.2e}")
 
-time_series = df.groupby("time")["Phi"].mean().reset_index()
+    with colB:
+        phi_knn = models["KNN"].predict(X_new)[0]
+        phi_gpr, std = models["GPR"].predict(X_new, return_std=True)
 
-fig2 = go.Figure()
-fig2.add_trace(
-    go.Scatter(
-        x=time_series["time"],
-        y=time_series["Phi"],
-        mode="lines+markers",
-        line=dict(width=3)
-    )
-)
+        st.success(f"🟠 **KNN**: {phi_knn:.2e}")
+        st.success(f"🟣 **GPR**: {phi_gpr[0]:.2e}")
 
-fig2.update_layout(
-    template="simple_white",
-    xaxis_title="Time (s)",
-    yaxis_title="Mean Φ"
-)
-
-st.plotly_chart(fig2, use_container_width=True)
+        st.caption(f"📈 GPR uncertainty (±1σ): {std[0]:.2e}")
 
 # --------------------------------------------------
-st.markdown("---")
+st.markdown("<hr>", unsafe_allow_html=True)
 st.caption(
-    "🧪 Models trained dynamically using embedded confidential data. "
-    "Designed for reproducible research and reviewer-safe deployment."
+    "🧪 Predictions generated using machine-learning models trained on "
+    "embedded experimental data. No external data upload required."
 )
