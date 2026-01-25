@@ -17,9 +17,9 @@ st.set_page_config(
 
 # --------------------------------------------------
 st.markdown("""
-<h2 style="text-align:center;">🌊 Sediment Transport Prediction Tool</h2>
+<h2 style="text-align:center;">🌊 GUI Tool for Sediment Transport Prediction In Steep Mounstain Channels </h2>
 <p style="text-align:center;color:gray;">
-Steep Mountain Channels | Experimental–ML Framework
+Steep Mountain Channels | Ensemble ML Framework
 </p>
 <hr>
 """, unsafe_allow_html=True)
@@ -88,7 +88,15 @@ if st.button("🔮 Predict Sediment Transport", use_container_width=True):
 
 # --------------------------------------------------
 st.markdown("<hr>", unsafe_allow_html=True)
-st.caption(
-    "🧪 Predictions generated using machine-learning models trained on "
-    "embedded experimental data. No external data upload required."
+
+st.markdown(
+    """
+    <div style="text-align:center; font-size:13px; color:gray;">
+        <b>Developed by Ajaz Ahmad Mir</b><br>
+        Research Scholar, Department of Civil Engineering<br>
+        Dr. B. R. Ambedkar National Institute of Technology, Jalandhar, India
+    </div>
+    """,
+    unsafe_allow_html=True
 )
+
