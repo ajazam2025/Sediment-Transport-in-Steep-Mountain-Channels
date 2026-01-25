@@ -11,13 +11,13 @@ from sklearn.linear_model import BayesianRidge
 # --------------------------------------------------
 st.set_page_config(
     page_title="Sediment Transport Predictor",
-    page_icon="🌊",
+    page_icon="⛰️",
     layout="centered"
 )
 
 # --------------------------------------------------
 st.markdown("""
-<h2 style="text-align:center;">🌊 GUI Tool for Sediment Transport Prediction In Steep Mountain Channels </h2>
+<h2 style="text-align:center;">⛰️ GUI Tool for Sediment Transport Prediction In Steep Mountain Channels </h2>
 <p style="text-align:center;color:gray;">
 
 </p>
