@@ -17,9 +17,9 @@ st.set_page_config(
 
 # --------------------------------------------------
 st.markdown("""
-<h2 style="text-align:center;">🌊 GUI Tool for Sediment Transport Prediction In Steep Mounstain Channels </h2>
+<h2 style="text-align:center;">🌊 GUI Tool for Sediment Transport Prediction In Steep Mountain Channels </h2>
 <p style="text-align:center;color:gray;">
-Steep Mountain Channels | Ensemble ML Framework
+
 </p>
 <hr>
 """, unsafe_allow_html=True)
