@@ -32,7 +32,7 @@ y = df["Phi"].values
 @st.cache_resource
 def train_models():
 
-    # --- Base deterministic models ---
+    # Base models
     gbr = GradientBoostingRegressor(random_state=42)
     bma = BayesianRidge()
     knn = KNeighborsRegressor(n_neighbors=3)
@@ -41,7 +41,7 @@ def train_models():
     bma.fit(X, y)
     knn.fit(X, y)
 
-    # --- Train GPR on GBR predictions (KEY FIX) ---
+    # GPR trained on GBR residuals (stabilized)
     y_gbr = gbr.predict(X)
     residuals = y - y_gbr
 
@@ -60,14 +60,13 @@ def train_models():
         ))
     ])
 
-    # GPR learns residual structure
     gpr.fit(X, residuals)
 
     return {
         "BMA": bma,
         "GBR": gbr,
         "KNN": knn,
-        "GPR": gpr          # SAME NAME, STABLE BEHAVIOR
+        "GPR": gpr   # same name, deterministic output
     }
 
 models = train_models()
@@ -80,13 +79,13 @@ col1, col2 = st.columns(2)
 with col1:
     So = st.number_input("📐 Bed slope (So)", value=0.03)
     Q = st.number_input("💧 Discharge Q (m³/s)", value=0.15)
-    U = st.number_input("➡️ Velocity U (m/s)", value=1.40)
+    U = st.number_input("➡️ Mean velocity U (m/s)", value=1.40)
     H = st.number_input("📏 Flow depth H (m)", value=0.23)
 
 with col2:
     Re = st.number_input("🔁 Reynolds number", value=3.2e5, format="%.1e")
     theta = st.number_input("⚖️ Shields parameter θ", value=0.001)
-    lambda_D = st.number_input("🪨 Relative spacing λ/D", value=2.0)
+    lambda_D = st.number_input("🪨 Relative boulder spacing (λ/D)", value=2.0)
 
 X_new = np.array([[So, Q, U, H, Re, theta, lambda_D]])
 
@@ -95,14 +94,13 @@ if st.button("🔮 Predict Sediment Transport", use_container_width=True):
 
     st.markdown("### 📊 Predicted Dimensionless Bedload Transport Rate (Φ)")
 
-    # Base predictions
     phi_bma = models["BMA"].predict(X_new)[0]
     phi_gbr = models["GBR"].predict(X_new)[0]
     phi_knn = models["KNN"].predict(X_new)[0]
 
-    # GPR correction on top of GBR
-    gpr_residual, gpr_std = models["GPR"].predict(X_new, return_std=True)
-    phi_gpr = phi_gbr + gpr_residual[0]
+    # GPR correction only (no uncertainty shown)
+    gpr_residual = models["GPR"].predict(X_new)[0]
+    phi_gpr = phi_gbr + gpr_residual
 
     colA, colB = st.columns(2)
 
@@ -113,7 +111,6 @@ if st.button("🔮 Predict Sediment Transport", use_container_width=True):
     with colB:
         st.success(f"🟠 **KNN** : {phi_knn:.2e}")
         st.success(f"🟣 **GPR** : {phi_gpr:.2e}")
-        st.caption(f"📈 GPR uncertainty (±1σ): {gpr_std[0]:.2e}")
 
 # --------------------------------------------------
 st.markdown("<hr>", unsafe_allow_html=True)
