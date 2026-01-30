@@ -17,12 +17,42 @@ st.set_page_config(
     layout="centered"
 )
 
+# --------------------------------------------------
+# Background + frame styling
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #f4f6f8;
+    }
+    .main-frame {
+        background-color: #ffffff;
+        padding: 32px 40px;
+        border-radius: 14px;
+        box-shadow: 0px 6px 16px rgba(0,0,0,0.08);
+        max-width: 900px;
+        margin: auto;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# --------------------------------------------------
+# Start frame
+st.markdown('<div class="main-frame">', unsafe_allow_html=True)
+
+# --------------------------------------------------
 st.markdown("""
-<h2 style="text-align:center;">⛰️ GUI Tool for Sediment Transport Prediction in Steep Mountain Channels</h2>
+<h2 style="text-align:center;">⛰️ GUI Tool for Sediment Transport Prediction</h2>
+<p style="text-align:center; color:gray;">
+Steep Mountain Channels | Experimental–Machine Learning Framework
+</p>
 <hr>
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------
+# Load embedded confidential data
 df = load_data()
 
 X = df[["So","Q","U","H","Re","theta","lambda_D"]].values
@@ -41,7 +71,7 @@ def train_models():
     bma.fit(X, y)
     knn.fit(X, y)
 
-    # GPR trained on GBR residuals (stabilized)
+    # GPR trained on GBR residuals (stable)
     y_gbr = gbr.predict(X)
     residuals = y - y_gbr
 
@@ -66,7 +96,7 @@ def train_models():
         "BMA": bma,
         "GBR": gbr,
         "KNN": knn,
-        "GPR": gpr   # same name, deterministic output
+        "GPR": gpr
     }
 
 models = train_models()
@@ -84,13 +114,16 @@ with col1:
 
 with col2:
     Re = st.number_input("🔁 Reynolds number", value=3.2e5, format="%.1e")
-    theta = st.number_input("⚖️ Shields parameter θ", value=0.001)
+    theta = st.number_input("⚖️ Shields parameter (θ)", value=0.001)
     lambda_D = st.number_input("🪨 Relative boulder spacing (λ/D)", value=2.0)
 
 X_new = np.array([[So, Q, U, H, Re, theta, lambda_D]])
 
+st.markdown("<br>", unsafe_allow_html=True)
+
 # --------------------------------------------------
-if st.button("🔮 Predict Sediment Transport", use_container_width=True):
+# Predict button
+if st.button("🔮 Predict Sediment Transport", type="primary", use_container_width=True):
 
     st.markdown("### 📊 Predicted Dimensionless Bedload Transport Rate (Φ)")
 
@@ -98,7 +131,7 @@ if st.button("🔮 Predict Sediment Transport", use_container_width=True):
     phi_gbr = models["GBR"].predict(X_new)[0]
     phi_knn = models["KNN"].predict(X_new)[0]
 
-    # GPR correction only (no uncertainty shown)
+    # GPR correction (no uncertainty shown)
     gpr_residual = models["GPR"].predict(X_new)[0]
     phi_gpr = phi_gbr + gpr_residual
 
@@ -114,6 +147,7 @@ if st.button("🔮 Predict Sediment Transport", use_container_width=True):
 
 # --------------------------------------------------
 st.markdown("<hr>", unsafe_allow_html=True)
+
 st.markdown(
     """
     <div style="text-align:center; font-size:13px; color:gray;">
@@ -124,3 +158,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# --------------------------------------------------
+# End frame
+st.markdown('</div>', unsafe_allow_html=True)
