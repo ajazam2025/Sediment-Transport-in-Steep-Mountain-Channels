@@ -48,7 +48,7 @@ with st.container():
     st.markdown("""
     <h2 style="text-align:center;">⛰️ GUI Tool for Sediment Transport Prediction</h2>
     <p style="text-align:center; color:gray;">
-    Steep Mountain Channels | Experimental–Machine Learning Framework
+    Steep Mountain Channels | Experimental & Ensemble | Machine Learning Framework
     </p>
     <hr>
     """, unsafe_allow_html=True)
